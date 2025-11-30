@@ -33,7 +33,7 @@ export const HeroSection = () => {
       <div className="w-full max-w-6xl mx-auto flex-1 flex items-center justify-center py-8 md:py-16">
         <div className={cn("relative w-full transition-all duration-1000", isLoaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10")}>
           {/* Hero image */}
-          <img src={heroCharacter} alt="Easton Romero - Game Music Producer" className="w-full h-auto max-h-[75vh] object-contain mx-auto rounded-none shadow-none opacity-100" />
+          <img alt="Easton Romero - Game Music Producer" className="w-full h-auto max-h-[75vh] object-contain mx-auto rounded-none shadow-none opacity-100" src="/lovable-uploads/1245b56e-602c-4e69-a193-52d86b577d96.png" />
           
           {/* Overlay badge */}
           <div className={cn("absolute bottom-4 left-4 md:bottom-8 md:left-8 lg:bottom-12 lg:left-12 transition-all duration-700 delay-300", isLoaded ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-10")}>
