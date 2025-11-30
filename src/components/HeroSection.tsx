@@ -33,7 +33,7 @@ export const HeroSection = () => {
           {/* Hero image */}
           <img
             src={heroCharacter}
-            alt="Yash Deshpande - Game Music Producer"
+            alt="Easton Romero - Game Music Producer"
             className="w-full h-auto max-h-[75vh] object-contain mx-auto"
           />
           
