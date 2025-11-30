@@ -69,7 +69,7 @@ export const ContactSection = () => {
 
         {/* Footer */}
         <div className={cn("mt-20 pt-8 border-t border-border text-center transition-all duration-700 delay-300", isVisible ? "opacity-100" : "opacity-0")}>
-          <p className="text-muted-foreground font-hand text-lg">Portfolio '25 • Easton Romero<span className="text-secondary">Easton Romero</span>
+          <p className="text-muted-foreground font-hand text-lg">Portfolio '25 •  <span className="text-secondary">Easton Romero</span>
           </p>
         </div>
       </div>
