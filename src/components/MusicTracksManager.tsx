@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Trash2, Loader2, Edit2, Check, X } from "lucide-react";
+import { Trash2, Loader2, Edit2, Check, X, Eye, EyeOff } from "lucide-react";
 
 interface MusicTrack {
   id: string;
@@ -13,6 +13,7 @@ interface MusicTrack {
   audio_url: string;
   file_path: string;
   created_at: string;
+  is_featured?: boolean;
 }
 
 export function MusicTracksManager() {
@@ -22,6 +23,7 @@ export function MusicTracksManager() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState("");
   const [savingId, setSavingId] = useState<string | null>(null);
+  const [togglingId, setTogglingId] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -48,6 +50,43 @@ export function MusicTracksManager() {
       });
     } finally {
       setIsLoading(false);
+    }
+  }
+
+  async function toggleTrackFeatured(track: MusicTrack) {
+    setTogglingId(track.id);
+
+    try {
+      const newFeaturedStatus = !track.is_featured;
+
+      const { error } = await supabase
+        .from("music_tracks")
+        .update({ is_featured: newFeaturedStatus })
+        .eq("id", track.id);
+
+      if (error) throw error;
+
+      setTracks(
+        tracks.map((t) =>
+          t.id === track.id ? { ...t, is_featured: newFeaturedStatus } : t
+        )
+      );
+
+      toast({
+        title: "Success",
+        description: newFeaturedStatus
+          ? "Track will show on homepage"
+          : "Track hidden from homepage",
+      });
+    } catch (error) {
+      console.error("Error toggling featured:", error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to update",
+        variant: "destructive",
+      });
+    } finally {
+      setTogglingId(null);
     }
   }
 
@@ -196,16 +235,34 @@ export function MusicTracksManager() {
 
           <div className="flex gap-2">
             {editingId !== track.id && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setEditingId(track.id);
-                  setEditingTitle(track.title);
-                }}
-              >
-                <Edit2 className="h-4 w-4" />
-              </Button>
+              <>
+                <Button
+                  variant={track.is_featured ?? true ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => toggleTrackFeatured(track)}
+                  disabled={togglingId === track.id}
+                  title={track.is_featured ?? true ? "Shown on homepage" : "Hidden from homepage"}
+                >
+                  {togglingId === track.id ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : track.is_featured ?? true ? (
+                    <Eye className="h-4 w-4" />
+                  ) : (
+                    <EyeOff className="h-4 w-4" />
+                  )}
+                </Button>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setEditingId(track.id);
+                    setEditingTitle(track.title);
+                  }}
+                >
+                  <Edit2 className="h-4 w-4" />
+                </Button>
+              </>
             )}
             <Button
               variant="destructive"

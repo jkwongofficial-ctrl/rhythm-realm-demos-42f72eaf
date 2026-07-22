@@ -11,6 +11,7 @@ interface MusicTrack {
   duration: string;
   cover_icon: string;
   audio_url: string;
+  is_featured?: boolean;
 }
 
 export const MusicShowcase = () => {
@@ -198,7 +199,10 @@ export const MusicShowcase = () => {
 
         {/* Music grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-          {musicTracks.slice(0, 6).map((track, index) => (
+          {musicTracks
+            .filter((track) => track.is_featured ?? true)
+            .slice(0, 6)
+            .map((track, index) => (
             <div
               key={track.id}
               className={cn(
@@ -344,6 +348,8 @@ export const MusicShowcase = () => {
               audioRef.current.currentTime = time;
             }
           }}
+          volume={volume}
+          onVolumeChange={setVolume}
         />
       </div>
     </section>
