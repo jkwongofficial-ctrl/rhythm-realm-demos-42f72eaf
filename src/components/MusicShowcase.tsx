@@ -15,6 +15,7 @@ interface MusicTrack {
 export const MusicShowcase = () => {
   const [musicTracks, setMusicTracks] = useState<MusicTrack[]>([]);
   const [playingIndex, setPlayingIndex] = useState<number | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [currentTime, setCurrentTime] = useState(0);
@@ -65,10 +66,24 @@ export const MusicShowcase = () => {
     if (audioRef.current && playingIndex !== null) {
       audioRef.current.src = musicTracks[playingIndex].audio_url;
       audioRef.current.play().catch(err => console.error("Play error:", err));
+      setIsPlaying(true);
     } else if (audioRef.current) {
       audioRef.current.pause();
+      setIsPlaying(false);
     }
   }, [playingIndex, musicTracks]);
+
+  const handlePlayPause = () => {
+    if (audioRef.current) {
+      if (isPlaying) {
+        audioRef.current.pause();
+        setIsPlaying(false);
+      } else {
+        audioRef.current.play().catch(err => console.error("Play error:", err));
+        setIsPlaying(true);
+      }
+    }
+  };
 
   useEffect(() => {
     if (audioRef.current) {
@@ -223,6 +238,25 @@ export const MusicShowcase = () => {
                     />
                   </div>
 
+                  {/* Play/Pause button */}
+                  <button
+                    onClick={handlePlayPause}
+                    className="p-2 hover:bg-muted rounded-full transition-colors flex-shrink-0"
+                    aria-label={isPlaying ? "Pause" : "Play"}
+                  >
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                      {isPlaying ? (
+                        <>
+                          <rect x="6" y="4" width="4" height="16" />
+                          <rect x="14" y="4" width="4" height="16" />
+                        </>
+                      ) : (
+                        <path d="M8 5v14l11-7z" />
+                      )}
+                    </svg>
+                  </button>
+
+                  {/* Stop button */}
                   <button
                     onClick={() => setPlayingIndex(null)}
                     className="p-2 hover:bg-muted rounded-full transition-colors flex-shrink-0"
