@@ -104,7 +104,7 @@ export const ModalMusicPlayer = ({
                 aria-label="Previous"
               >
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M16 6h2v12h-2V6zm-3.5 6L4 18V6l8.5 6z" />
+                  <path d="M6 6h2v12H6V6zm3.5 6l8.5-6v12l-8.5-6z" />
                 </svg>
               </button>
 
@@ -132,7 +132,7 @@ export const ModalMusicPlayer = ({
                 aria-label="Next"
               >
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M6 6h2v12H6V6zm3.5 6l8.5-6v12l-8.5-6z" />
+                  <path d="M16 6h2v12h-2V6zm-3.5 6L4 18V6l8.5 6z" />
                 </svg>
               </button>
             </div>
