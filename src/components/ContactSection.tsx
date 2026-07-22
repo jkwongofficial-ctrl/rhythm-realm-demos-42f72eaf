@@ -19,9 +19,9 @@ export const ContactSection = () => {
     return () => observer.disconnect();
   }, []);
   const handleEmailClick = () => {
-    navigator.clipboard.writeText("yashdeshpande2409@gmail.com");
+    navigator.clipboard.writeText("lawreinenala@yahoo.com");
     toast.success("Email copied to clipboard!", {
-      description: "yashdeshpande2409@gmail.com"
+      description: "lawreinenala@yahoo.com"
     });
   };
   const socialLinks = [{
