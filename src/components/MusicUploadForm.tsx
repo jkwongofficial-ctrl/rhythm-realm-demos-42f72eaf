@@ -1,96 +1,87 @@
 import { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Upload, Shuffle } from "lucide-react";
+import { Loader2, Upload, X } from "lucide-react";
 
 const MUSIC_EMOJIS = [
   "🎵", "🎶", "🎼", "🎹", "🎸", "🎤", "🎧", "🎺", "🎷", "🥁",
-  "🎻", "🎚️", "🎛️", "📻", "📀", "💿", "📀", "🔊", "🔉", "🎼",
-  "🎹", "🎸", "🎺", "🎻", "🥁", "🎷", "🎼", "🎤", "🎧", "🎵",
-  "⚫", "⭐", "✨", "🌟", "💫", "🎆", "🎇", "🌠", "🎪", "🎭",
-  "🎨", "🖼️", "🎬", "🎮", "🎯", "🎲", "🧩", "🎰", "🃏", "🎳",
+  "🎻", "🎚️", "🎛️", "📻", "💿", "🔊", "🔉", "🎮", "🎯", "⭐",
 ];
 
 const getRandomEmoji = () => MUSIC_EMOJIS[Math.floor(Math.random() * MUSIC_EMOJIS.length)];
 
-const formSchema = z.object({
-  title: z.string().min(1, "Title is required").max(100),
-  genre: z.string().min(1, "Genre is required").max(50),
-  duration: z.string().min(1, "Duration is required"),
-  coverIcon: z.string().min(1, "Emoji is required").max(2),
-});
-
-type FormValues = z.infer<typeof formSchema>;
+interface UploadTrack {
+  file: File;
+  title: string;
+  emoji: string;
+}
 
 export function MusicUploadForm() {
   const [isLoading, setIsLoading] = useState(false);
-  const [audioFile, setAudioFile] = useState<File | null>(null);
-  const [audioFileName, setAudioFileName] = useState("");
+  const [audioFiles, setAudioFiles] = useState<UploadTrack[]>([]);
   const { toast } = useToast();
   const { session } = useAuth();
 
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      title: "",
-      genre: "",
-      duration: "",
-      coverIcon: getRandomEmoji(),
-    },
-  });
-
-  useEffect(() => {
-    form.setValue("coverIcon", getRandomEmoji());
-  }, []);
-
-  const handleRandomEmoji = () => {
-    form.setValue("coverIcon", getRandomEmoji());
-  };
-
   const handleAudioFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (!file.type.startsWith("audio/")) {
-        toast({
-          title: "Invalid file type",
-          description: "Please upload an audio file (MP3, WAV, etc.)",
-          variant: "destructive",
+    const files = e.target.files;
+    if (files) {
+      const newTracks: UploadTrack[] = [];
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        if (!file.type.startsWith("audio/")) {
+          toast({
+            title: "Invalid file type",
+            description: `${file.name} is not an audio file. Skipped.`,
+            variant: "destructive",
+          });
+          continue;
+        }
+        if (file.size > 50 * 1024 * 1024) {
+          toast({
+            title: "File too large",
+            description: `${file.name} is larger than 50MB. Skipped.`,
+            variant: "destructive",
+          });
+          continue;
+        }
+
+        // Auto-generate title from filename (remove extension)
+        const title = file.name.replace(/\.[^/.]+$/, "");
+
+        newTracks.push({
+          file,
+          title: title.length > 0 ? title : `Track ${audioFiles.length + i + 1}`,
+          emoji: getRandomEmoji(),
         });
-        return;
       }
-      if (file.size > 50 * 1024 * 1024) {
-        toast({
-          title: "File too large",
-          description: "Audio file must be smaller than 50MB",
-          variant: "destructive",
-        });
-        return;
-      }
-      setAudioFile(file);
-      setAudioFileName(file.name);
+
+      setAudioFiles([...audioFiles, ...newTracks]);
+      e.target.value = ""; // Reset input
     }
   };
 
-  async function onSubmit(values: FormValues) {
-    if (!audioFile) {
+  const removeTrack = (index: number) => {
+    setAudioFiles(audioFiles.filter((_, i) => i !== index));
+  };
+
+  const updateTrackTitle = (index: number, title: string) => {
+    const updated = [...audioFiles];
+    updated[index].title = title;
+    setAudioFiles(updated);
+  };
+
+  const regenerateEmoji = (index: number) => {
+    const updated = [...audioFiles];
+    updated[index].emoji = getRandomEmoji();
+    setAudioFiles(updated);
+  };
+
+  const handleUpload = async () => {
+    if (audioFiles.length === 0) {
       toast({
-        title: "Audio file required",
-        description: "Please select an audio file to upload",
+        title: "No files selected",
+        description: "Please select at least one audio file",
         variant: "destructive",
       });
       return;
@@ -108,168 +99,164 @@ export function MusicUploadForm() {
     setIsLoading(true);
 
     try {
-      // Refresh session to ensure valid token
+      // Refresh session
       const { data: { session: freshSession }, error: refreshError } = await supabase.auth.refreshSession();
 
       if (refreshError || !freshSession) {
         throw new Error("Session expired. Please sign in again.");
       }
 
-      // Upload audio file to storage
-      const fileExt = audioFile.name.split(".").pop();
-      const fileName = `${Date.now()}.${fileExt}`;
-      const filePath = `music/${fileName}`;
+      // Upload each track
+      for (const track of audioFiles) {
+        const fileExt = track.file.name.split(".").pop();
+        const fileName = `${Date.now()}_${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
+        const filePath = `music/${fileName}`;
 
-      const { error: uploadError, data } = await supabase.storage
-        .from("music_files")
-        .upload(filePath, audioFile, { upsert: true });
+        // Upload file to storage
+        const { error: uploadError } = await supabase.storage
+          .from("music_files")
+          .upload(filePath, track.file, { upsert: true });
 
-      if (uploadError) {
-        console.error("Storage upload error details:", uploadError);
-        throw uploadError;
-      }
+        if (uploadError) {
+          throw uploadError;
+        }
 
-      // Get public URL
-      const {
-        data: { publicUrl },
-      } = supabase.storage.from("music_files").getPublicUrl(filePath);
+        // Get public URL
+        const { data: { publicUrl } } = supabase.storage
+          .from("music_files")
+          .getPublicUrl(filePath);
 
-      // Save metadata to database
-      const { error: dbError } = await supabase.from("music_tracks").insert({
-        title: values.title,
-        genre: values.genre,
-        duration: values.duration,
-        cover_icon: values.coverIcon,
-        audio_url: publicUrl,
-        file_path: filePath,
-      });
+        // Save to database
+        const { error: dbError } = await supabase.from("music_tracks").insert({
+          title: track.title,
+          genre: "GAME OST",
+          duration: "1:00",
+          cover_icon: track.emoji,
+          audio_url: publicUrl,
+          file_path: filePath,
+        });
 
-      if (dbError) {
-        throw dbError;
+        if (dbError) {
+          throw dbError;
+        }
       }
 
       toast({
         title: "Success",
-        description: "Music track uploaded successfully!",
+        description: `${audioFiles.length} track(s) uploaded successfully!`,
       });
 
-      form.reset();
-      setAudioFile(null);
-      setAudioFileName("");
+      setAudioFiles([]);
     } catch (error) {
       console.error("Upload error:", error);
       toast({
         title: "Upload failed",
-        description: error instanceof Error ? error.message : "Failed to upload track",
+        description: error instanceof Error ? error.message : "Failed to upload tracks",
         variant: "destructive",
       });
     } finally {
       setIsLoading(false);
     }
-  }
+  };
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <FormField
-          control={form.control}
-          name="title"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Track Title</FormLabel>
-              <FormControl>
-                <Input placeholder="e.g., Epic Boss Battle" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
+    <div className="space-y-6">
+      {/* File Input */}
+      <div>
+        <label className="block text-sm font-medium text-foreground mb-3">
+          Select Audio Files (Multiple)
+        </label>
+        <div className="flex items-center gap-4">
+          <input
+            type="file"
+            accept="audio/*"
+            multiple
+            onChange={handleAudioFileChange}
+            disabled={isLoading}
+            className="cursor-pointer flex-1"
+          />
+          {audioFiles.length > 0 && (
+            <span className="text-sm text-muted-foreground px-3 py-2 bg-muted rounded-lg">
+              {audioFiles.length} file{audioFiles.length !== 1 ? "s" : ""} selected
+            </span>
           )}
-        />
+        </div>
+      </div>
 
-        <FormField
-          control={form.control}
-          name="genre"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Genre</FormLabel>
-              <FormControl>
-                <Input placeholder="e.g., Orchestral" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+      {/* Tracks List */}
+      {audioFiles.length > 0 && (
+        <div className="space-y-4 p-4 bg-muted/30 rounded-lg border border-muted">
+          <p className="text-sm font-medium text-foreground">
+            Editing tracks (Genre: GAME OST, Duration: 1:00)
+          </p>
 
-        <FormField
-          control={form.control}
-          name="duration"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Duration (MM:SS)</FormLabel>
-              <FormControl>
-                <Input placeholder="e.g., 3:42" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+          <div className="space-y-3 max-h-96 overflow-y-auto">
+            {audioFiles.map((track, index) => (
+              <div
+                key={index}
+                className="p-3 bg-card rounded-lg border border-muted flex items-center gap-3"
+              >
+                {/* Emoji Button */}
+                <button
+                  type="button"
+                  onClick={() => regenerateEmoji(index)}
+                  className="text-2xl hover:scale-110 transition-transform flex-shrink-0"
+                  title="Click to randomize emoji"
+                >
+                  {track.emoji}
+                </button>
 
-        <FormField
-          control={form.control}
-          name="coverIcon"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Cover Emoji</FormLabel>
-              <FormControl>
-                <div className="flex gap-2">
-                  <Input placeholder="e.g., ⚔️" maxLength={2} {...field} className="flex-1" />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    onClick={handleRandomEmoji}
-                    disabled={isLoading}
-                  >
-                    <Shuffle className="h-4 w-4" />
-                  </Button>
-                </div>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+                {/* Title Input */}
+                <input
+                  type="text"
+                  value={track.title}
+                  onChange={(e) => updateTrackTitle(index, e.target.value)}
+                  className="flex-1 px-3 py-2 bg-muted rounded border border-border focus:outline-none focus:ring-2 focus:ring-primary text-foreground text-sm"
+                  placeholder="Track title"
+                />
 
-        <FormItem>
-          <FormLabel>Audio File</FormLabel>
-          <FormControl>
-            <div className="flex items-center gap-4">
-              <Input
-                type="file"
-                accept="audio/*"
-                onChange={handleAudioFileChange}
-                disabled={isLoading}
-                className="cursor-pointer"
-              />
-              {audioFileName && (
-                <span className="text-sm text-muted-foreground">{audioFileName}</span>
-              )}
-            </div>
-          </FormControl>
-        </FormItem>
+                {/* Remove Button */}
+                <button
+                  type="button"
+                  onClick={() => removeTrack(index)}
+                  className="p-2 hover:bg-muted rounded-full transition-colors flex-shrink-0"
+                  aria-label="Remove"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
-        <Button type="submit" disabled={isLoading} className="w-full">
-          {isLoading ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Uploading...
-            </>
-          ) : (
-            <>
-              <Upload className="mr-2 h-4 w-4" />
-              Upload Track
-            </>
-          )}
-        </Button>
-      </form>
-    </Form>
+      {/* Upload Button */}
+      <button
+        onClick={handleUpload}
+        disabled={isLoading || audioFiles.length === 0}
+        className="w-full px-6 py-3 bg-primary hover:bg-primary/90 disabled:bg-muted disabled:opacity-50 disabled:cursor-not-allowed text-primary-foreground rounded-lg transition-colors flex items-center justify-center gap-2 sketch-border font-medium"
+      >
+        {isLoading ? (
+          <>
+            <Loader2 className="w-4 h-4 animate-spin" />
+            Uploading {audioFiles.length} track{audioFiles.length !== 1 ? "s" : ""}...
+          </>
+        ) : (
+          <>
+            <Upload className="w-4 h-4" />
+            Upload {audioFiles.length} Track{audioFiles.length !== 1 ? "s" : ""}
+          </>
+        )}
+      </button>
+
+      {/* Info */}
+      <p className="text-xs text-muted-foreground">
+        📝 Auto-filled: Genre = GAME OST, Duration = 1:00
+        <br />
+        🎲 Emoji randomized - click to change
+        <br />
+        ✏️ Edit titles as needed before uploading
+      </p>
+    </div>
   );
 }
