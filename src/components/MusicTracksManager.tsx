@@ -59,6 +59,19 @@ export function MusicTracksManager() {
     try {
       const newFeaturedStatus = !track.is_featured;
 
+      if (newFeaturedStatus) {
+        const featuredCount = tracks.filter((t) => t.is_featured).length;
+        if (featuredCount >= 6) {
+          toast({
+            title: "Limit reached",
+            description: "You can only select six tracks to feature on the homepage",
+            variant: "destructive",
+          });
+          setTogglingId(null);
+          return;
+        }
+      }
+
       const { error } = await supabase
         .from("music_tracks")
         .update({ is_featured: newFeaturedStatus })
