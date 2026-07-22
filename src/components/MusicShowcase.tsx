@@ -85,6 +85,12 @@ export const MusicShowcase = () => {
     }
   };
 
+  const handleNextTrack = () => {
+    if (playingIndex !== null && playingIndex < musicTracks.length - 1) {
+      setPlayingIndex(playingIndex + 1);
+    }
+  };
+
   useEffect(() => {
     if (audioRef.current) {
       audioRef.current.volume = volume;
@@ -259,6 +265,18 @@ export const MusicShowcase = () => {
                       ) : (
                         <path d="M8 5v14l11-7z" />
                       )}
+                    </svg>
+                  </button>
+
+                  {/* Next button */}
+                  <button
+                    onClick={handleNextTrack}
+                    disabled={playingIndex === null || playingIndex >= musicTracks.length - 1}
+                    className="p-2 hover:bg-muted rounded-full transition-colors flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                    aria-label="Next track"
+                  >
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M6 4l12 8-12 8V4zm12 0v16h2V4h-2z" />
                     </svg>
                   </button>
 
