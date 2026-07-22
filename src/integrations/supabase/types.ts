@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      music_tracks: {
+        Row: {
+          id: string
+          title: string
+          genre: string
+          duration: string
+          cover_icon: string
+          audio_url: string
+          file_path: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          title: string
+          genre: string
+          duration: string
+          cover_icon: string
+          audio_url: string
+          file_path: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          title?: string
+          genre?: string
+          duration?: string
+          cover_icon?: string
+          audio_url?: string
+          file_path?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string

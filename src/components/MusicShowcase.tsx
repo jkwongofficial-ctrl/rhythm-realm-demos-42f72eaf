@@ -1,50 +1,44 @@
 import { useState, useEffect, useRef } from "react";
 import { MusicCard } from "./MusicCard";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 
-const musicTracks = [
-  {
-    title: "Epic Boss Battle",
-    genre: "Orchestral",
-    duration: "3:42",
-    coverIcon: "⚔️",
-  },
-  {
-    title: "Forest Whispers",
-    genre: "Ambient",
-    duration: "4:15",
-    coverIcon: "🌲",
-  },
-  {
-    title: "Neon Streets",
-    genre: "Synthwave",
-    duration: "2:58",
-    coverIcon: "🌃",
-  },
-  {
-    title: "Victory Theme",
-    genre: "Fanfare",
-    duration: "1:24",
-    coverIcon: "🏆",
-  },
-  {
-    title: "Mystical Cave",
-    genre: "Fantasy",
-    duration: "5:01",
-    coverIcon: "💎",
-  },
-  {
-    title: "Pixel Adventure",
-    genre: "Chiptune",
-    duration: "2:33",
-    coverIcon: "👾",
-  },
-];
+interface MusicTrack {
+  id: string;
+  title: string;
+  genre: string;
+  duration: string;
+  cover_icon: string;
+  audio_url: string;
+}
 
 export const MusicShowcase = () => {
+  const [musicTracks, setMusicTracks] = useState<MusicTrack[]>([]);
   const [playingIndex, setPlayingIndex] = useState<number | null>(null);
   const [isVisible, setIsVisible] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const sectionRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    fetchMusicTracks();
+  }, []);
+
+  async function fetchMusicTracks() {
+    try {
+      const { data, error } = await supabase
+        .from("music_tracks")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+
+      setMusicTracks((data || []) as MusicTrack[]);
+    } catch (error) {
+      console.error("Error fetching tracks:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -67,9 +61,37 @@ export const MusicShowcase = () => {
     setPlayingIndex(playingIndex === index ? null : index);
   };
 
+  if (isLoading) {
+    return (
+      <section
+        id="music"
+        ref={sectionRef}
+        className="py-20 md:py-32 bg-paper"
+      >
+        <div className="container mx-auto px-6 text-center">
+          <p className="text-muted-foreground">Loading music tracks...</p>
+        </div>
+      </section>
+    );
+  }
+
+  if (musicTracks.length === 0) {
+    return (
+      <section
+        id="music"
+        ref={sectionRef}
+        className="py-20 md:py-32 bg-paper"
+      >
+        <div className="container mx-auto px-6 text-center">
+          <p className="text-muted-foreground">No music tracks available yet</p>
+        </div>
+      </section>
+    );
+  }
+
   return (
-    <section 
-      id="music" 
+    <section
+      id="music"
       ref={sectionRef}
       className="py-20 md:py-32 bg-paper"
     >
@@ -85,7 +107,7 @@ export const MusicShowcase = () => {
           <p className="font-hand text-xl md:text-2xl text-muted-foreground max-w-xl mx-auto">
             Click to play and experience the soundscapes I've crafted for games
           </p>
-          
+
           {/* Decorative underline */}
           <div className="flex justify-center mt-6">
             <div className="w-24 h-1 bg-secondary rounded-full" />
@@ -96,17 +118,20 @@ export const MusicShowcase = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
           {musicTracks.map((track, index) => (
             <div
-              key={track.title}
+              key={track.id}
               className={cn(
                 "transition-all duration-700",
-                isVisible 
-                  ? "opacity-100 translate-y-0" 
+                isVisible
+                  ? "opacity-100 translate-y-0"
                   : "opacity-0 translate-y-10"
               )}
               style={{ transitionDelay: `${index * 100}ms` }}
             >
               <MusicCard
-                {...track}
+                title={track.title}
+                genre={track.genre}
+                duration={track.duration}
+                coverIcon={track.cover_icon}
                 index={index}
                 onPlay={handlePlay}
                 isCurrentlyPlaying={playingIndex === index}
