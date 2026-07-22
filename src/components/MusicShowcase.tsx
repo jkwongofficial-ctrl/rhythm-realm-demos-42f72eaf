@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { MusicCard } from "./MusicCard";
+import { ModalMusicPlayer } from "./ModalMusicPlayer";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -21,6 +22,7 @@ export const MusicShowcase = () => {
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(1);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
   const sectionRef = useRef<HTMLElement>(null);
 
@@ -220,6 +222,21 @@ export const MusicShowcase = () => {
           ))}
         </div>
 
+        {/* More button */}
+        <div className="flex justify-center mt-12">
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="flex items-center gap-2 px-6 py-3 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg transition-colors sketch-border"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <circle cx="6" cy="12" r="2" />
+              <circle cx="12" cy="12" r="2" />
+              <circle cx="18" cy="12" r="2" />
+            </svg>
+            More
+          </button>
+        </div>
+
         {/* Now playing bar */}
         {playingIndex !== null && (
           <div className="fixed bottom-0 left-0 right-0 bg-card border-t-3 border-primary p-4 shadow-2xl animate-fade-in-up z-50">
@@ -309,6 +326,25 @@ export const MusicShowcase = () => {
             </div>
           </div>
         )}
+
+        {/* Modal Music Player */}
+        <ModalMusicPlayer
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          tracks={musicTracks}
+          currentTrackIndex={playingIndex}
+          onTrackSelect={setPlayingIndex}
+          isPlaying={isPlaying}
+          onPlayPause={handlePlayPause}
+          currentTime={currentTime}
+          duration={duration}
+          onSeek={(time) => {
+            setCurrentTime(time);
+            if (audioRef.current) {
+              audioRef.current.currentTime = time;
+            }
+          }}
+        />
       </div>
     </section>
   );
