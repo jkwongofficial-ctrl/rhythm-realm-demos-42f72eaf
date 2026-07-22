@@ -48,23 +48,12 @@ export const ContactSection = () => {
     }
   };
   const handleEmailClick = () => {
-    navigator.clipboard.writeText("lawreinenala@yahoo.com");
-    toast.success("Email copied to clipboard!", {
-      description: "lawreinenala@yahoo.com"
-    });
+    window.open("mailto:lawreinenala@yahoo.com", "_blank");
   };
   const socialLinks = [{
     name: "Email",
     icon: "✉️",
     action: handleEmailClick
-  }, {
-    name: "Twitter",
-    icon: "🐦",
-    href: "#"
-  }, {
-    name: "SoundCloud",
-    icon: "☁️",
-    href: "#"
   }, {
     name: "YouTube",
     icon: "📺",
