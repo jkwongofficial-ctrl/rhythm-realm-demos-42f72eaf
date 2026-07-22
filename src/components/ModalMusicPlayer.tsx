@@ -63,7 +63,7 @@ export const ModalMusicPlayer = ({
 
   return (
     <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4">
-      <div className="bg-card rounded-lg shadow-2xl w-full max-w-md max-h-[90vh] overflow-hidden flex flex-col sketch-border">
+      <div className="bg-card rounded-lg shadow-2xl w-full max-w-md overflow-hidden flex flex-col sketch-border">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-muted">
           <h2 className="text-xl font-bold text-foreground">All Tracks</h2>
@@ -160,7 +160,7 @@ export const ModalMusicPlayer = ({
         )}
 
         {/* Playlist */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="h-[320px] overflow-y-auto border-t border-muted">
           <div className="divide-y divide-muted">
             {tracks.map((track, index) => (
               <button
