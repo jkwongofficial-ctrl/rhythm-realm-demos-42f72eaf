@@ -22,6 +22,8 @@ interface ModalMusicPlayerProps {
   currentTime: number;
   duration: number;
   onSeek: (time: number) => void;
+  volume?: number;
+  onVolumeChange?: (volume: number) => void;
 }
 
 export const ModalMusicPlayer = ({
@@ -35,6 +37,8 @@ export const ModalMusicPlayer = ({
   currentTime,
   duration,
   onSeek,
+  volume = 1,
+  onVolumeChange,
 }: ModalMusicPlayerProps) => {
   const formatTime = (time: number) => {
     if (!time || isNaN(time)) return "0:00";
@@ -135,6 +139,22 @@ export const ModalMusicPlayer = ({
                   <path d="M16 6h2v12h-2V6zm-3.5 6L4 18V6l8.5 6z" />
                 </svg>
               </button>
+            </div>
+
+            {/* Volume control */}
+            <div className="flex items-center gap-2 justify-center mt-4 pt-4 border-t border-muted">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className="text-muted-foreground">
+                <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.26 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z" />
+              </svg>
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.1"
+                value={volume}
+                onChange={(e) => onVolumeChange?.(parseFloat(e.target.value))}
+                className="w-24 h-1 bg-muted rounded-full cursor-pointer"
+              />
             </div>
           </div>
         )}
