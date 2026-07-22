@@ -48,7 +48,7 @@ export const ContactSection = () => {
     }
   };
   const handleEmailClick = () => {
-    window.open("mailto:lawreinenala@yahoo.com", "_blank");
+    window.location.href = "mailto:lawreinenala@yahoo.com";
   };
   const socialLinks = [{
     name: "Email",
