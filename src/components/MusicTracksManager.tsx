@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Trash2, Loader2 } from "lucide-react";
+import { Trash2, Loader2, Edit2, Check, X } from "lucide-react";
 
 interface MusicTrack {
   id: string;
@@ -19,6 +19,9 @@ export function MusicTracksManager() {
   const [tracks, setTracks] = useState<MusicTrack[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingTitle, setEditingTitle] = useState("");
+  const [savingId, setSavingId] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -45,6 +48,51 @@ export function MusicTracksManager() {
       });
     } finally {
       setIsLoading(false);
+    }
+  }
+
+  async function updateTrackTitle(trackId: string, newTitle: string) {
+    if (!newTitle.trim()) {
+      toast({
+        title: "Error",
+        description: "Title cannot be empty",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setSavingId(trackId);
+
+    try {
+      const { error } = await supabase
+        .from("music_tracks")
+        .update({ title: newTitle })
+        .eq("id", trackId);
+
+      if (error) throw error;
+
+      setTracks(
+        tracks.map((t) =>
+          t.id === trackId ? { ...t, title: newTitle } : t
+        )
+      );
+
+      toast({
+        title: "Success",
+        description: "Track name updated",
+      });
+
+      setEditingId(null);
+      setEditingTitle("");
+    } catch (error) {
+      console.error("Error updating track:", error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to update track",
+        variant: "destructive",
+      });
+    } finally {
+      setSavingId(null);
     }
   }
 
@@ -102,28 +150,76 @@ export function MusicTracksManager() {
           key={track.id}
           className="flex items-center justify-between p-4 bg-muted rounded-lg"
         >
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 flex-1">
             <span className="text-3xl">{track.cover_icon}</span>
-            <div>
-              <h3 className="font-semibold text-foreground">{track.title}</h3>
-              <p className="text-sm text-muted-foreground">
-                {track.genre} • {track.duration}
-              </p>
+            <div className="flex-1">
+              {editingId === track.id ? (
+                <div className="flex gap-2 items-center mb-2">
+                  <input
+                    type="text"
+                    value={editingTitle}
+                    onChange={(e) => setEditingTitle(e.target.value)}
+                    className="flex-1 px-3 py-2 bg-background rounded border border-border focus:outline-none focus:ring-2 focus:ring-primary text-foreground"
+                    autoFocus
+                  />
+                  <button
+                    onClick={() => updateTrackTitle(track.id, editingTitle)}
+                    disabled={savingId === track.id}
+                    className="p-2 hover:bg-primary/20 rounded transition-colors"
+                  >
+                    {savingId === track.id ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Check className="h-4 w-4 text-green-600" />
+                    )}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setEditingId(null);
+                      setEditingTitle("");
+                    }}
+                    className="p-2 hover:bg-muted rounded transition-colors"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <h3 className="font-semibold text-foreground">{track.title}</h3>
+                  <p className="text-sm text-muted-foreground">
+                    {track.genre} • {track.duration}
+                  </p>
+                </>
+              )}
             </div>
           </div>
 
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={() => deleteTrack(track)}
-            disabled={deletingId === track.id}
-          >
-            {deletingId === track.id ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Trash2 className="h-4 w-4" />
+          <div className="flex gap-2">
+            {editingId !== track.id && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setEditingId(track.id);
+                  setEditingTitle(track.title);
+                }}
+              >
+                <Edit2 className="h-4 w-4" />
+              </Button>
             )}
-          </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => deleteTrack(track)}
+              disabled={deletingId === track.id}
+            >
+              {deletingId === track.id ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Trash2 className="h-4 w-4" />
+              )}
+            </Button>
+          </div>
         </div>
       ))}
     </div>
