@@ -14,6 +14,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Upload, Shuffle } from "lucide-react";
 
@@ -41,6 +42,7 @@ export function MusicUploadForm() {
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [audioFileName, setAudioFileName] = useState("");
   const { toast } = useToast();
+  const { session } = useAuth();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -94,19 +96,36 @@ export function MusicUploadForm() {
       return;
     }
 
+    if (!session) {
+      toast({
+        title: "Not authenticated",
+        description: "Please sign in before uploading",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
 
     try {
+      // Refresh session to ensure valid token
+      const { data: { session: freshSession }, error: refreshError } = await supabase.auth.refreshSession();
+
+      if (refreshError || !freshSession) {
+        throw new Error("Session expired. Please sign in again.");
+      }
+
       // Upload audio file to storage
       const fileExt = audioFile.name.split(".").pop();
       const fileName = `${Date.now()}.${fileExt}`;
       const filePath = `music/${fileName}`;
 
-      const { error: uploadError } = await supabase.storage
+      const { error: uploadError, data } = await supabase.storage
         .from("music_files")
         .upload(filePath, audioFile, { upsert: true });
 
       if (uploadError) {
+        console.error("Storage upload error details:", uploadError);
         throw uploadError;
       }
 
