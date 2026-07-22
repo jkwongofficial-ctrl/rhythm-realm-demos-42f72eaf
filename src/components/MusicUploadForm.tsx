@@ -20,6 +20,8 @@ interface UploadTrack {
 export function MusicUploadForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [audioFiles, setAudioFiles] = useState<UploadTrack[]>([]);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [currentUploadTrack, setCurrentUploadTrack] = useState<string>("");
   const { toast } = useToast();
   const { session } = useAuth();
 
@@ -107,7 +109,11 @@ export function MusicUploadForm() {
       }
 
       // Upload each track
-      for (const track of audioFiles) {
+      for (let i = 0; i < audioFiles.length; i++) {
+        const track = audioFiles[i];
+        setCurrentUploadTrack(track.title);
+        setUploadProgress(Math.round((i / audioFiles.length) * 100));
+
         const fileExt = track.file.name.split(".").pop();
         const fileName = `${Date.now()}_${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
         const filePath = `music/${fileName}`;
@@ -139,6 +145,9 @@ export function MusicUploadForm() {
         if (dbError) {
           throw dbError;
         }
+
+        // Update progress
+        setUploadProgress(Math.round(((i + 1) / audioFiles.length) * 100));
       }
 
       toast({
@@ -147,6 +156,8 @@ export function MusicUploadForm() {
       });
 
       setAudioFiles([]);
+      setUploadProgress(0);
+      setCurrentUploadTrack("");
     } catch (error) {
       console.error("Upload error:", error);
       toast({
@@ -154,6 +165,8 @@ export function MusicUploadForm() {
         description: error instanceof Error ? error.message : "Failed to upload tracks",
         variant: "destructive",
       });
+      setUploadProgress(0);
+      setCurrentUploadTrack("");
     } finally {
       setIsLoading(false);
     }
@@ -248,6 +261,26 @@ export function MusicUploadForm() {
           </>
         )}
       </button>
+
+      {/* Progress Bar */}
+      {isLoading && (
+        <div className="space-y-2">
+          <div className="w-full bg-muted rounded-full h-3 overflow-hidden border border-border">
+            <div
+              className="h-full bg-gradient-to-r from-primary to-secondary rounded-full transition-all duration-300 ease-out"
+              style={{ width: `${uploadProgress}%` }}
+            />
+          </div>
+          <div className="flex justify-between items-center text-xs text-muted-foreground">
+            <span>{uploadProgress}% Complete</span>
+            {currentUploadTrack && (
+              <span className="text-primary font-medium truncate max-w-xs">
+                Uploading: {currentUploadTrack}
+              </span>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Info */}
       <p className="text-xs text-muted-foreground">
