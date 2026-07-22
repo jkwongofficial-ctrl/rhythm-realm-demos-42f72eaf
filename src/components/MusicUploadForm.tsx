@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -15,7 +15,17 @@ import {
 } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Upload } from "lucide-react";
+import { Loader2, Upload, Shuffle } from "lucide-react";
+
+const MUSIC_EMOJIS = [
+  "🎵", "🎶", "🎼", "🎹", "🎸", "🎤", "🎧", "🎺", "🎷", "🥁",
+  "🎻", "🎚️", "🎛️", "📻", "📀", "💿", "📀", "🔊", "🔉", "🎼",
+  "🎹", "🎸", "🎺", "🎻", "🥁", "🎷", "🎼", "🎤", "🎧", "🎵",
+  "⚫", "⭐", "✨", "🌟", "💫", "🎆", "🎇", "🌠", "🎪", "🎭",
+  "🎨", "🖼️", "🎬", "🎮", "🎯", "🎲", "🧩", "🎰", "🃏", "🎳",
+];
+
+const getRandomEmoji = () => MUSIC_EMOJIS[Math.floor(Math.random() * MUSIC_EMOJIS.length)];
 
 const formSchema = z.object({
   title: z.string().min(1, "Title is required").max(100),
@@ -38,9 +48,17 @@ export function MusicUploadForm() {
       title: "",
       genre: "",
       duration: "",
-      coverIcon: "",
+      coverIcon: getRandomEmoji(),
     },
   });
+
+  useEffect(() => {
+    form.setValue("coverIcon", getRandomEmoji());
+  }, []);
+
+  const handleRandomEmoji = () => {
+    form.setValue("coverIcon", getRandomEmoji());
+  };
 
   const handleAudioFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -183,7 +201,18 @@ export function MusicUploadForm() {
             <FormItem>
               <FormLabel>Cover Emoji</FormLabel>
               <FormControl>
-                <Input placeholder="e.g., ⚔️" maxLength={2} {...field} />
+                <div className="flex gap-2">
+                  <Input placeholder="e.g., ⚔️" maxLength={2} {...field} className="flex-1" />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={handleRandomEmoji}
+                    disabled={isLoading}
+                  >
+                    <Shuffle className="h-4 w-4" />
+                  </Button>
+                </div>
               </FormControl>
               <FormMessage />
             </FormItem>
