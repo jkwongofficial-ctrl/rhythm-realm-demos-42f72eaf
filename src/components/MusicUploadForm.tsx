@@ -17,13 +17,40 @@ interface UploadTrack {
   emoji: string;
 }
 
+interface DuplicatePrompt {
+  track: UploadTrack;
+  index: number;
+}
+
+interface DuplicateResponse {
+  replace: boolean;
+}
+
 export function MusicUploadForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [audioFiles, setAudioFiles] = useState<UploadTrack[]>([]);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [currentUploadTrack, setCurrentUploadTrack] = useState<string>("");
+  const [duplicatePrompt, setDuplicatePrompt] = useState<DuplicatePrompt | null>(null);
+  const [duplicateResponses, setDuplicateResponses] = useState<Record<number, boolean>>({});
   const { toast } = useToast();
   const { session } = useAuth();
+
+  const checkDuplicate = async (title: string): Promise<boolean> => {
+    try {
+      const { data, error } = await supabase
+        .from("music_tracks")
+        .select("id")
+        .eq("title", title)
+        .maybeSingle();
+
+      if (error && error.code !== "PGRST116") throw error;
+      return !!data;
+    } catch (error) {
+      console.error("Error checking duplicate:", error);
+      return false;
+    }
+  };
 
   const handleAudioFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -108,9 +135,28 @@ export function MusicUploadForm() {
         throw new Error("Session expired. Please sign in again.");
       }
 
+      // Check for duplicates first
+      for (let i = 0; i < audioFiles.length; i++) {
+        const track = audioFiles[i];
+        const isDuplicate = await checkDuplicate(track.title);
+
+        if (isDuplicate && !(i in duplicateResponses)) {
+          setIsLoading(false);
+          setDuplicatePrompt({ track, index: i });
+          return;
+        }
+      }
+
       // Upload each track
       for (let i = 0; i < audioFiles.length; i++) {
         const track = audioFiles[i];
+        const shouldSkip = (i in duplicateResponses) && !duplicateResponses[i];
+
+        if (shouldSkip) {
+          setUploadProgress(Math.round(((i + 1) / audioFiles.length) * 100));
+          continue;
+        }
+
         setCurrentUploadTrack(track.title);
         setUploadProgress(Math.round((i / audioFiles.length) * 100));
 
@@ -132,18 +178,47 @@ export function MusicUploadForm() {
           .from("music_files")
           .getPublicUrl(filePath);
 
-        // Save to database
-        const { error: dbError } = await supabase.from("music_tracks").insert({
-          title: track.title,
-          genre: "GAME OST",
-          duration: "1:00",
-          cover_icon: track.emoji,
-          audio_url: publicUrl,
-          file_path: filePath,
-        });
+        // Check if this is a replacement
+        const { data: existingTrack } = await supabase
+          .from("music_tracks")
+          .select("id, file_path")
+          .eq("title", track.title)
+          .maybeSingle();
 
-        if (dbError) {
-          throw dbError;
+        if (existingTrack) {
+          // Delete old file if it exists
+          if (existingTrack.file_path) {
+            await supabase.storage
+              .from("music_files")
+              .remove([existingTrack.file_path])
+              .catch(() => {}); // Ignore errors
+          }
+
+          // Update existing record
+          const { error: updateError } = await supabase
+            .from("music_tracks")
+            .update({
+              audio_url: publicUrl,
+              file_path: filePath,
+              cover_icon: track.emoji,
+            })
+            .eq("id", existingTrack.id);
+
+          if (updateError) throw updateError;
+        } else {
+          // Insert new record
+          const { error: dbError } = await supabase.from("music_tracks").insert({
+            title: track.title,
+            genre: "GAME OST",
+            duration: "1:00",
+            cover_icon: track.emoji,
+            audio_url: publicUrl,
+            file_path: filePath,
+          });
+
+          if (dbError) {
+            throw dbError;
+          }
         }
 
         // Update progress
@@ -290,6 +365,52 @@ export function MusicUploadForm() {
         <br />
         ✏️ Edit titles as needed before uploading
       </p>
+
+      {/* Duplicate Prompt */}
+      {duplicatePrompt && (
+        <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4">
+          <div className="bg-card rounded-lg shadow-2xl max-w-sm w-full p-6 sketch-border space-y-4">
+            <div>
+              <h3 className="text-lg font-bold text-foreground mb-2">
+                {duplicatePrompt.track.emoji} Duplicate Track
+              </h3>
+              <p className="text-muted-foreground">
+                A track named "<strong>{duplicatePrompt.track.title}</strong>" already exists.
+                Would you like to replace it or keep the existing file?
+              </p>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setDuplicateResponses({
+                    ...duplicateResponses,
+                    [duplicatePrompt.index]: false,
+                  });
+                  setDuplicatePrompt(null);
+                  handleUpload();
+                }}
+                className="flex-1 px-4 py-2 bg-muted hover:bg-muted/80 text-foreground rounded-lg transition-colors"
+              >
+                Keep Existing
+              </button>
+              <button
+                onClick={() => {
+                  setDuplicateResponses({
+                    ...duplicateResponses,
+                    [duplicatePrompt.index]: true,
+                  });
+                  setDuplicatePrompt(null);
+                  handleUpload();
+                }}
+                className="flex-1 px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg transition-colors sketch-border"
+              >
+                Replace
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
