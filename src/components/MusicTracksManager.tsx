@@ -184,7 +184,8 @@ export function MusicTracksManager() {
 
   return (
     <div className="space-y-4">
-      {tracks.map((track) => (
+      <div className="max-h-96 overflow-y-auto pr-2 space-y-4">
+        {tracks.map((track) => (
         <div
           key={track.id}
           className="flex items-center justify-between p-4 bg-muted rounded-lg"
@@ -279,6 +280,7 @@ export function MusicTracksManager() {
           </div>
         </div>
       ))}
+      </div>
     </div>
   );
 }
