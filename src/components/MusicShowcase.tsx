@@ -92,7 +92,13 @@ export const MusicShowcase = () => {
   }, [volume]);
 
   const handlePlay = (index: number) => {
-    setPlayingIndex(playingIndex === index ? null : index);
+    if (playingIndex === index) {
+      // Same track clicked: toggle play/pause
+      handlePlayPause();
+    } else {
+      // Different track clicked: play new track
+      setPlayingIndex(index);
+    }
   };
 
   const handleTimeUpdate = () => {
