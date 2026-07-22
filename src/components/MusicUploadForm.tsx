@@ -343,9 +343,9 @@ export function MusicUploadForm() {
           <div className="flex gap-3 items-center">
             {/* Battery container */}
             <div className="flex-1 relative">
-              <div className="w-full bg-muted rounded-lg h-12 overflow-hidden border-2 border-primary flex items-center justify-center">
+              <div className="w-full bg-muted rounded-lg h-12 overflow-hidden border-2 border-teal-500 flex items-center justify-center">
                 <div
-                  className="absolute left-0 top-0 h-full bg-gradient-to-r from-primary via-secondary to-primary transition-all duration-300 ease-out rounded-lg"
+                  className="absolute left-0 top-0 h-full bg-teal-500 transition-all duration-300 ease-out rounded-lg"
                   style={{ width: `${uploadProgress}%` }}
                 />
                 <span className="relative text-2xl font-bold text-foreground z-10">
@@ -355,13 +355,13 @@ export function MusicUploadForm() {
             </div>
 
             {/* Battery terminal */}
-            <div className="w-2 h-6 bg-primary rounded-r-lg" />
+            <div className="w-2 h-6 bg-teal-500 rounded-r-lg" />
           </div>
 
           {/* Track info */}
           {currentUploadTrack && (
             <p className="text-sm text-muted-foreground text-center">
-              🎵 Uploading: <span className="text-primary font-medium">{currentUploadTrack}</span>
+              🎵 Uploading: <span className="text-teal-500 font-medium">{currentUploadTrack}</span>
             </p>
           )}
         </div>
