@@ -24,6 +24,7 @@ export function MusicTracksManager() {
   const [editingTitle, setEditingTitle] = useState("");
   const [savingId, setSavingId] = useState<string | null>(null);
   const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [showLimitModal, setShowLimitModal] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -62,11 +63,7 @@ export function MusicTracksManager() {
       if (newFeaturedStatus) {
         const featuredCount = tracks.filter((t) => t.is_featured).length;
         if (featuredCount >= 6) {
-          toast({
-            title: "Limit reached",
-            description: "You can only select six tracks to feature on the homepage",
-            variant: "destructive",
-          });
+          setShowLimitModal(true);
           setTogglingId(null);
           return;
         }
@@ -294,6 +291,31 @@ export function MusicTracksManager() {
         </div>
       ))}
       </div>
+
+      {/* Limit Modal */}
+      {showLimitModal && (
+        <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4">
+          <div className="bg-card rounded-lg shadow-2xl max-w-sm w-full p-6 sketch-border space-y-4">
+            <div>
+              <h3 className="text-lg font-bold text-foreground mb-2">
+                📊 Limit Reached
+              </h3>
+              <p className="text-muted-foreground">
+                You can only select six tracks to feature on the homepage.
+              </p>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowLimitModal(false)}
+                className="flex-1 px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg transition-colors sketch-border font-medium"
+              >
+                Okay
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
