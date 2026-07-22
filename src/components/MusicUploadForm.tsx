@@ -104,7 +104,7 @@ export function MusicUploadForm() {
 
       const { error: uploadError } = await supabase.storage
         .from("music_files")
-        .upload(filePath, audioFile);
+        .upload(filePath, audioFile, { upsert: true });
 
       if (uploadError) {
         throw uploadError;
