@@ -337,23 +337,33 @@ export function MusicUploadForm() {
         )}
       </button>
 
-      {/* Progress Bar */}
+      {/* Battery Progress Bar */}
       {isLoading && (
-        <div className="space-y-2">
-          <div className="w-full bg-muted rounded-full h-3 overflow-hidden border border-border">
-            <div
-              className="h-full bg-gradient-to-r from-primary to-secondary rounded-full transition-all duration-300 ease-out"
-              style={{ width: `${uploadProgress}%` }}
-            />
+        <div className="space-y-3">
+          <div className="flex gap-3 items-center">
+            {/* Battery container */}
+            <div className="flex-1 relative">
+              <div className="w-full bg-muted rounded-lg h-12 overflow-hidden border-2 border-primary flex items-center justify-center">
+                <div
+                  className="absolute left-0 top-0 h-full bg-gradient-to-r from-primary via-secondary to-primary transition-all duration-300 ease-out rounded-lg"
+                  style={{ width: `${uploadProgress}%` }}
+                />
+                <span className="relative text-2xl font-bold text-foreground z-10">
+                  {uploadProgress}%
+                </span>
+              </div>
+            </div>
+
+            {/* Battery terminal */}
+            <div className="w-2 h-6 bg-primary rounded-r-lg" />
           </div>
-          <div className="flex justify-between items-center text-xs text-muted-foreground">
-            <span>{uploadProgress}% Complete</span>
-            {currentUploadTrack && (
-              <span className="text-primary font-medium truncate max-w-xs">
-                Uploading: {currentUploadTrack}
-              </span>
-            )}
-          </div>
+
+          {/* Track info */}
+          {currentUploadTrack && (
+            <p className="text-sm text-muted-foreground text-center">
+              🎵 Uploading: <span className="text-primary font-medium">{currentUploadTrack}</span>
+            </p>
+          )}
         </div>
       )}
 
