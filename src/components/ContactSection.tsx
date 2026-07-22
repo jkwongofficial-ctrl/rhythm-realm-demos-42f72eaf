@@ -48,7 +48,8 @@ export const ContactSection = () => {
     }
   };
   const handleEmailClick = () => {
-    window.location.href = "mailto:lawreinenala@yahoo.com";
+    const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=lawreinenala@yahoo.com&su=Let%27s%20collab`;
+    window.open(gmailUrl, "_blank");
   };
   const socialLinks = [{
     name: "Email",
