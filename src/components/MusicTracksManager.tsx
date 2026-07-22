@@ -192,8 +192,17 @@ export function MusicTracksManager() {
     return <div className="text-center text-muted-foreground">No tracks uploaded yet</div>;
   }
 
+  const featuredCount = tracks.filter((t) => t.is_featured).length;
+
   return (
     <div className="space-y-4">
+      {/* Featured Counter */}
+      <div className="flex items-center gap-2 p-3 bg-muted/30 rounded-lg border border-muted">
+        <span className="text-sm font-medium text-foreground">Featured Tracks:</span>
+        <span className="px-2 py-1 bg-primary text-primary-foreground rounded-full text-sm font-bold">
+          {featuredCount}/6
+        </span>
+      </div>
       <div className="max-h-96 overflow-y-auto pr-2 space-y-4">
         {tracks.map((track) => (
         <div
