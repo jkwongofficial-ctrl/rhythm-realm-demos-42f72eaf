@@ -220,7 +220,7 @@ export const MusicShowcase = () => {
                 coverIcon={track.cover_icon}
                 index={index}
                 onPlay={handlePlay}
-                isCurrentlyPlaying={playingIndex === index}
+                isCurrentlyPlaying={playingIndex === index && isPlaying}
               />
             </div>
           ))}
