@@ -25,6 +25,7 @@ export function MusicTracksManager() {
   const [savingId, setSavingId] = useState<string | null>(null);
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const [showLimitModal, setShowLimitModal] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const { toast } = useToast();
 
   useEffect(() => {
@@ -193,18 +194,38 @@ export function MusicTracksManager() {
   }
 
   const featuredCount = tracks.filter((t) => t.is_featured).length;
+  const filteredTracks = tracks.filter((track) =>
+    track.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    track.genre.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <div className="space-y-4">
-      {/* Featured Counter */}
-      <div className="flex items-center gap-2 p-3 bg-muted/30 rounded-lg border border-muted">
-        <span className="text-sm font-medium text-foreground">Featured Tracks:</span>
-        <span className="px-2 py-1 bg-primary text-primary-foreground rounded-full text-sm font-bold">
-          {featuredCount}/6
-        </span>
+      {/* Featured Counter and Search */}
+      <div className="flex items-center gap-3 flex-wrap">
+        <div className="flex-1 min-w-[200px]">
+          <input
+            type="text"
+            placeholder="🔍 Search tracks by name or genre..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full px-3 py-2 bg-muted rounded border border-border focus:outline-none focus:ring-2 focus:ring-primary text-foreground text-sm"
+          />
+        </div>
+        <div className="flex items-center gap-2 p-3 bg-muted/30 rounded-lg border border-muted whitespace-nowrap">
+          <span className="text-sm font-medium text-foreground">Featured:</span>
+          <span className="px-2 py-1 bg-primary text-primary-foreground rounded-full text-sm font-bold">
+            {featuredCount}/6
+          </span>
+        </div>
       </div>
+      {filteredTracks.length === 0 ? (
+        <div className="text-center py-8 text-muted-foreground">
+          {searchQuery ? "No tracks match your search" : "No tracks uploaded yet"}
+        </div>
+      ) : (
       <div className="max-h-96 overflow-y-auto pr-2 space-y-4">
-        {tracks.map((track) => (
+        {filteredTracks.map((track) => (
         <div
           key={track.id}
           className="flex items-center justify-between p-4 bg-muted rounded-lg"
@@ -300,6 +321,7 @@ export function MusicTracksManager() {
         </div>
       ))}
       </div>
+      )}
 
       {/* Limit Modal */}
       {showLimitModal && (
