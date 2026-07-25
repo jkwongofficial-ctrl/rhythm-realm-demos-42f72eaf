@@ -158,7 +158,15 @@ export function MusicUploadForm() {
         }
 
         setCurrentUploadTrack(track.title);
-        setUploadProgress(Math.round((i / audioFiles.length) * 100));
+        const fileStartProgress = Math.round((i / audioFiles.length) * 100);
+        const fileEndProgress = Math.round(((i + 1) / audioFiles.length) * 100);
+        const progressIncrement = (fileEndProgress - fileStartProgress) / 4;
+
+        // Show start progress
+        setUploadProgress(fileStartProgress);
+        await new Promise(resolve => setTimeout(resolve, 100));
+        setUploadProgress(fileStartProgress + progressIncrement);
+        await new Promise(resolve => setTimeout(resolve, 100));
 
         const fileExt = track.file.name.split(".").pop();
         const fileName = `${Date.now()}_${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
@@ -172,6 +180,9 @@ export function MusicUploadForm() {
         if (uploadError) {
           throw uploadError;
         }
+
+        setUploadProgress(fileStartProgress + progressIncrement * 2);
+        await new Promise(resolve => setTimeout(resolve, 100));
 
         // Get public URL
         const { data: { publicUrl } } = supabase.storage
@@ -221,8 +232,8 @@ export function MusicUploadForm() {
           }
         }
 
-        // Update progress
-        setUploadProgress(Math.round(((i + 1) / audioFiles.length) * 100));
+        // Update progress to completion for this file
+        setUploadProgress(fileEndProgress);
       }
 
       toast({
