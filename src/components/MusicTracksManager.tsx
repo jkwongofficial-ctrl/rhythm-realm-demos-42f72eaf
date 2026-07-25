@@ -26,6 +26,7 @@ export function MusicTracksManager() {
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const [showLimitModal, setShowLimitModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [sortBy, setSortBy] = useState<"name-asc" | "name-desc" | "recent" | "featured">("recent");
   const { toast } = useToast();
 
   useEffect(() => {
@@ -199,9 +200,30 @@ export function MusicTracksManager() {
     track.genre.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const sortedTracks = (() => {
+    const featured = filteredTracks.filter((t) => t.is_featured);
+    const notFeatured = filteredTracks.filter((t) => !t.is_featured);
+
+    const sortFn = (a: MusicTrack, b: MusicTrack) => {
+      switch (sortBy) {
+        case "name-asc":
+          return a.title.localeCompare(b.title);
+        case "name-desc":
+          return b.title.localeCompare(a.title);
+        case "recent":
+        default:
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      }
+    };
+
+    featured.sort(sortFn);
+    notFeatured.sort(sortFn);
+    return [...featured, ...notFeatured];
+  })();
+
   return (
     <div className="space-y-4">
-      {/* Featured Counter and Search */}
+      {/* Search, Sort, and Counter */}
       <div className="flex items-center gap-3 flex-wrap">
         <div className="flex-1 min-w-[200px]">
           <input
@@ -212,6 +234,19 @@ export function MusicTracksManager() {
             className="w-full px-3 py-2 bg-muted rounded border border-border focus:outline-none focus:ring-2 focus:ring-primary text-foreground text-sm"
           />
         </div>
+
+        {/* Sort Dropdown */}
+        <select
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+          className="px-3 py-2 bg-muted rounded border border-border focus:outline-none focus:ring-2 focus:ring-primary text-foreground text-sm"
+        >
+          <option value="recent">📅 Recently Added</option>
+          <option value="name-asc">A-Z Name</option>
+          <option value="name-desc">Z-A Name</option>
+          <option value="featured">⭐ Featured First</option>
+        </select>
+
         <div className="flex items-center gap-2 p-3 bg-muted/30 rounded-lg border border-muted whitespace-nowrap">
           <span className="text-sm font-medium text-foreground">Featured:</span>
           <span className="px-2 py-1 bg-primary text-primary-foreground rounded-full text-sm font-bold">
@@ -219,13 +254,13 @@ export function MusicTracksManager() {
           </span>
         </div>
       </div>
-      {filteredTracks.length === 0 ? (
+      {sortedTracks.length === 0 ? (
         <div className="text-center py-8 text-muted-foreground">
           {searchQuery ? "No tracks match your search" : "No tracks uploaded yet"}
         </div>
       ) : (
       <div className="max-h-96 overflow-y-auto pr-2 space-y-4">
-        {filteredTracks.map((track) => (
+        {sortedTracks.map((track) => (
         <div
           key={track.id}
           className="flex items-center justify-between p-4 bg-muted rounded-lg"
