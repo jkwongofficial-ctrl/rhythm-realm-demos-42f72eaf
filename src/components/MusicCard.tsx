@@ -58,11 +58,11 @@ export const MusicCard = ({
         
         {/* Play overlay */}
         <div className={cn(
-          "absolute inset-0 bg-primary/10 flex items-center justify-center transition-opacity duration-300",
-          isHovered || isCurrentlyPlaying ? "opacity-100" : "opacity-0"
+          "absolute inset-0 bg-black/20 flex items-center justify-center transition-all duration-300",
+          isHovered ? "opacity-100 bg-black/30" : "opacity-80 bg-black/15"
         )}>
-          <PlayButton 
-            isPlaying={isCurrentlyPlaying} 
+          <PlayButton
+            isPlaying={isCurrentlyPlaying}
             onClick={handlePlay}
             size="md"
           />
