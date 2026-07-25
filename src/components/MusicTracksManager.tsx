@@ -26,7 +26,7 @@ export function MusicTracksManager() {
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const [showLimitModal, setShowLimitModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [sortBy, setSortBy] = useState<"name-asc" | "name-desc" | "recent" | "featured">("recent");
+  const [sortBy, setSortBy] = useState<"name-asc" | "name-desc" | "recent">("recent");
   const { toast } = useToast();
 
   useEffect(() => {
@@ -244,7 +244,6 @@ export function MusicTracksManager() {
           <option value="recent">📅 Recently Added</option>
           <option value="name-asc">A-Z Name</option>
           <option value="name-desc">Z-A Name</option>
-          <option value="featured">⭐ Featured First</option>
         </select>
 
         <div className="flex items-center gap-2 p-3 bg-muted/30 rounded-lg border border-muted whitespace-nowrap">
